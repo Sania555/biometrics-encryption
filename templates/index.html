@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Biometric Encryption System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+    }
+
+    header {
+      background: linear-gradient(135deg, #161b22, #1f2937);
+      border-bottom: 1px solid #30363d;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    header .logo { font-size: 28px; }
+    header h1 { font-size: 20px; font-weight: 600; color: #58a6ff; }
+    header p  { font-size: 13px; color: #8b949e; margin-top: 2px; }
+
+    .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; }
+    .tab-btn {
+      padding: 10px 24px;
+      border: 1px solid #30363d;
+      background: #161b22;
+      color: #8b949e;
+      border-radius: 8px 8px 0 0;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all .2s;
+    }
+    .tab-btn:hover { background: #1f2937; color: #e6edf3; }
+    .tab-btn.active { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* Card */
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 28px;
+    }
+    .card h2 { font-size: 16px; font-weight: 600; margin-bottom: 6px; color: #e6edf3; }
+    .card .subtitle { font-size: 13px; color: #8b949e; margin-bottom: 24px; }
+
+    /* Form */
+    .form-group { margin-bottom: 18px; }
+    label { display: block; font-size: 13px; color: #8b949e; margin-bottom: 6px; }
+    input[type="text"], textarea {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #e6edf3;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type="text"]:focus, textarea:focus { border-color: #1f6feb; }
+    textarea { resize: vertical; min-height: 90px; font-family: monospace; }
+
+    /* Webcam */
+    .webcam-box {
+      position: relative;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 18px;
+    }
+    .webcam-box video, .webcam-box canvas {
+      width: 100%;
+      display: block;
+      border-radius: 10px;
+    }
+    .webcam-box canvas { display: none; }
+    .webcam-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 180px;
+      height: 220px;
+      border: 2px dashed #1f6feb;
+      border-radius: 50%;
+      pointer-events: none;
+      opacity: .6;
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 22px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:active { transform: scale(.97); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn-primary { background: #1f6feb; color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #388bfd; }
+    .btn-success { background: #238636; color: #fff; }
+    .btn-success:hover:not(:disabled) { background: #2ea043; }
+    .btn-danger  { background: #da3633; color: #fff; }
+    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* Alert */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 18px;
+      display: none;
+      line-height: 1.5;
+    }
+    .alert.show { display: block; }
+    .alert-success { background: #0f2a1a; border: 1px solid #238636; color: #3fb950; }
+    .alert-error   { background: #2a0f0f; border: 1px solid #da3633; color: #f85149; }
+    .alert-info    { background: #0d1f3c; border: 1px solid #1f6feb; color: #58a6ff; }
+
+    /* Result box */
+    .result-box {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 14px;
+      font-family: monospace;
+      font-size: 13px;
+      color: #3fb950;
+      margin-top: 14px;
+      word-break: break-all;
+      display: none;
+    }
+    .result-box.show { display: block; }
+
+    /* Status badges */
+    .status-row { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .badge {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-green { background: #0f2a1a; border: 1px solid #238636; color: #3fb950; }
+    .badge-gray  { background: #161b22; border: 1px solid #30363d; color: #8b949e; }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Flow diagram */
+    .flow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .flow-step {
+      background: #1f2937;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #8b949e;
+      text-align: center;
+    }
+    .flow-step span { display: block; font-size: 18px; margin-bottom: 2px; }
+    .flow-arrow { color: #30363d; font-size: 18px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🔐</div>
+  <div>
+    <h1>Biometric-Based Encryption System</h1>
+    <p>Use Case 2 — Face Recognition → AES Key → Confidential Data Access</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Flow diagram -->
+  <div class="flow">
+    <div class="flow-step"><span>📷</span>Capture Face</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span>🧠</span>Facenet Embedding</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span>🔑</span>PBKDF2 Key Derivation</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span>🔒</span>AES-256-GCM</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-step"><span>✅</span>Secure Data</div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('enroll')">👤 Enroll</button>
+    <button class="tab-btn" onclick="switchTab('encrypt')">🔒 Encrypt</button>
+    <button class="tab-btn" onclick="switchTab('decrypt')">🔓 Decrypt</button>
+  </div>
+
+  <!-- ENROLL TAB -->
+  <div id="tab-enroll" class="tab-panel active">
+    <div class="card">
+      <h2>Face Enrollment</h2>
+      <p class="subtitle">Register your face to generate a unique biometric key profile.</p>
+
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="enroll-username" placeholder="e.g. alice" />
+      </div>
+
+      <div class="webcam-box">
+        <video id="enroll-video" autoplay playsinline></video>
+        <canvas id="enroll-canvas"></canvas>
+        <div class="webcam-overlay"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startCamera('enroll')">📷 Start Camera</button>
+        <button class="btn btn-success" id="enroll-btn" onclick="doEnroll()" disabled>✅ Enroll Face</button>
+      </div>
+
+      <div id="enroll-alert" class="alert"></div>
+    </div>
+  </div>
+
+  <!-- ENCRYPT TAB -->
+  <div id="tab-encrypt" class="tab-panel">
+    <div class="card">
+      <h2>Encrypt Confidential Data</h2>
+      <p class="subtitle">Your enrolled face embedding derives the AES-256 key used to encrypt this data.</p>
+
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="encrypt-username" placeholder="Must be enrolled first" />
+      </div>
+
+      <div class="form-group">
+        <label>Confidential Data (plaintext)</label>
+        <textarea id="encrypt-plaintext" placeholder="Enter your secret message or data..."></textarea>
+      </div>
+
+      <button class="btn btn-primary" onclick="doEncrypt()">🔒 Encrypt Data</button>
+
+      <div id="encrypt-alert" class="alert"></div>
+      <div id="encrypt-result" class="result-box"></div>
+    </div>
+  </div>
+
+  <!-- DECRYPT TAB -->
+  <div id="tab-decrypt" class="tab-panel">
+    <div class="card">
+      <h2>Face-Authenticated Decryption</h2>
+      <p class="subtitle">Capture your face live — it must match the enrolled profile to unlock the AES key.</p>
+
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="decrypt-username" placeholder="Enrolled username" />
+      </div>
+
+      <div class="webcam-box">
+        <video id="decrypt-video" autoplay playsinline></video>
+        <canvas id="decrypt-canvas"></canvas>
+        <div class="webcam-overlay"></div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startCamera('decrypt')">📷 Start Camera</button>
+        <button class="btn btn-success" id="decrypt-btn" onclick="doDecrypt()" disabled>🔓 Verify Face & Decrypt</button>
+      </div>
+
+      <div id="decrypt-alert" class="alert"></div>
+      <div id="decrypt-result" class="result-box"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const streams = {};
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  async function startCamera(prefix) {
+    const video = document.getElementById(prefix + '-video');
+    const btn   = document.getElementById(prefix + '-btn');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      streams[prefix] = stream;
+      video.srcObject = stream;
+      btn.disabled = false;
+      showAlert(prefix, 'Camera started. Position your face in the oval and click the action button.', 'info');
+    } catch (e) {
+      showAlert(prefix, 'Camera access denied: ' + e.message, 'error');
+    }
+  }
+
+  function captureFrame(prefix) {
+    const video  = document.getElementById(prefix + '-video');
+    const canvas = document.getElementById(prefix + '-canvas');
+    canvas.width  = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    return canvas.toDataURL('image/jpeg', 0.9);
+  }
+
+  function showAlert(prefix, msg, type) {
+    const el = document.getElementById(prefix + '-alert');
+    el.className = 'alert show alert-' + type;
+    el.innerHTML = msg;
+  }
+
+  function setLoading(btnId, loading, label) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.innerHTML = loading ? `<span class="spinner"></span> Processing...` : label;
+  }
+
+  // ── Enroll ──────────────────────────────────────────────────────────────────
+  async function doEnroll() {
+    const username = document.getElementById('enroll-username').value.trim();
+    if (!username) { showAlert('enroll', 'Please enter a username.', 'error'); return; }
+
+    const image = captureFrame('enroll');
+    setLoading('enroll-btn', true, '✅ Enroll Face');
+
+    try {
+      const res = await fetch('/api/enroll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, image }),
+      });
+      const data = await res.json();
+      showAlert('enroll', data.message, data.success ? 'success' : 'error');
+    } catch (e) {
+      showAlert('enroll', 'Server error: ' + e.message, 'error');
+    } finally {
+      setLoading('enroll-btn', false, '✅ Enroll Face');
+    }
+  }
+
+  // ── Encrypt ─────────────────────────────────────────────────────────────────
+  async function doEncrypt() {
+    const username  = document.getElementById('encrypt-username').value.trim();
+    const plaintext = document.getElementById('encrypt-plaintext').value.trim();
+    if (!username || !plaintext) {
+      showAlert('encrypt', 'Please fill in both fields.', 'error'); return;
+    }
+
+    const btn = document.querySelector('#tab-encrypt .btn-primary');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span> Encrypting...`;
+
+    try {
+      const res = await fetch('/api/encrypt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, plaintext }),
+      });
+      const data = await res.json();
+      showAlert('encrypt', data.message, data.success ? 'success' : 'error');
+      if (data.success) {
+        const box = document.getElementById('encrypt-result');
+        box.classList.add('show');
+        box.innerHTML = `<b>Ciphertext (AES-256-GCM):</b><br>${data.ciphertext_preview}<br><br><b>Saved to:</b> ${data.enc_file}`;
+      }
+    } catch (e) {
+      showAlert('encrypt', 'Server error: ' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '🔒 Encrypt Data';
+    }
+  }
+
+  // ── Decrypt ─────────────────────────────────────────────────────────────────
+  async function doDecrypt() {
+    const username = document.getElementById('decrypt-username').value.trim();
+    if (!username) { showAlert('decrypt', 'Please enter a username.', 'error'); return; }
+
+    const image = captureFrame('decrypt');
+    setLoading('decrypt-btn', true, '🔓 Verify Face & Decrypt');
+
+    try {
+      const res = await fetch('/api/decrypt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, image }),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        showAlert('decrypt',
+          `✅ Access Granted — Face distance: <b>${data.distance}</b> (threshold: 0.40)`,
+          'success');
+        const box = document.getElementById('decrypt-result');
+        box.classList.add('show');
+        box.innerHTML = `<b>Decrypted Data:</b><br><br>${data.plaintext}`;
+      } else {
+        showAlert('decrypt',
+          `❌ ${data.message}${data.distance ? ` (distance: ${data.distance})` : ''}`,
+          'error');
+        document.getElementById('decrypt-result').classList.remove('show');
+      }
+    } catch (e) {
+      showAlert('decrypt', 'Server error: ' + e.message, 'error');
+    } finally {
+      setLoading('decrypt-btn', false, '🔓 Verify Face & Decrypt');
+    }
+  }
+</script>
+</body>
+</html>

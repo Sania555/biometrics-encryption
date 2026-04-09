@@ -66,3 +66,20 @@ def embeddings_match(enrolled: np.ndarray, live: np.ndarray) -> tuple[bool, floa
     cosine_sim = dot / (norm + 1e-10)
     distance = 1.0 - cosine_sim
     return distance <= SIMILARITY_THRESHOLD, float(distance)
+
+
+def capture_face_embedding_from_frame(frame: np.ndarray) -> np.ndarray | None:
+    """
+    Extract face embedding from an already-captured OpenCV frame.
+    Used by the Flask web API (browser sends webcam snapshot).
+    """
+    try:
+        result = DeepFace.represent(
+            img_path=frame,
+            model_name=MODEL_NAME,
+            enforce_detection=True,
+            detector_backend="opencv",
+        )
+        return np.array(result[0]["embedding"])
+    except Exception:
+        return None
